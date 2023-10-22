@@ -14,9 +14,8 @@ terminal tris game with ncurses, implementation in c for linux, using the mouse.
 
 ## how to compile
 
-1. cd src
-2. make
-3. make run
+1. make
+2. make run
 
 ### Dependencies
 Before compiling make sure you have ncurses dev install

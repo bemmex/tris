@@ -223,7 +223,7 @@ int game_draw(Board *tris, int offset_y, int offset_x, Player *player)
 
 	if ( player->win == 1 )
 	{
-		WINDOW *m_win;
+		WINDOW *m_win =NULL;
 
 		if (player->current == PLAYER_A)
 		{
