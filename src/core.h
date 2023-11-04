@@ -16,6 +16,15 @@ typedef struct _Cell Cell;
 typedef struct _Board Board;
 typedef struct _Solution Solution;
 typedef struct _Player Player;
+typedef struct _Move Move;
+
+typedef enum _Gamemode Gamemode;
+
+enum _Gamemode {
+	PLAYER_PLAYER,
+	PLAYER_PC,
+	PC_PC
+};
 
 struct _Cell {
 	int player;
@@ -29,6 +38,7 @@ struct _Board {
 	Cell elements[MAX_ELEMENT][MAX_ELEMENT];
 	int row;
 	int column;
+	int gamemode;
 };
 
 struct _Solution {
@@ -41,6 +51,12 @@ struct _Player
 	int win;
 };
 
+struct _Move
+{
+	int score;
+	int row;
+	int col;
+};
 
 void init_board(Board *tris);
 
@@ -59,5 +75,9 @@ void toggle_player_state(Player *player);
 void set_player_state(Player *player, int state);
 
 int get_player_state(Player *player);
+
+Move *find_best_move(Board *tris);
+
+Move *random_walk(Board *tris);
 
 #endif /* _CORE_H */

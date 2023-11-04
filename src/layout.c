@@ -6,6 +6,8 @@
  * --------------------------------
  */
 
+#include <stdlib.h>
+#include <unistd.h>
 #include "layout.h"
 
 // remove comment for test
@@ -84,7 +86,14 @@ int game_loop(Board *tris, Player *player, Solution *s)
 
 	while (run == 1)
 	{
-		ch = getch();
+		Move *mv = NULL;
+
+		if ( tris->gamemode == PLAYER_PC && player->current == PLAYER_B && player->win == 0 ){
+			mv = random_walk(tris);
+			ch = KEY_MOUSE;
+		}else{
+			ch = getch();
+		}
 
 		if ( /*ch == '\n' ||*/ ch == 27 ) //ENTER or ESC or ^C
 		{
@@ -93,12 +102,24 @@ int game_loop(Board *tris, Player *player, Solution *s)
 
 		if (ch == KEY_MOUSE)
 		{
-			getmouse(&mouseevent);
-			move(1, COLS - 25);
-			clrtoeol();
-			printw("%d - %d", mouseevent.y, mouseevent.x);
-			move(mouseevent.y, mouseevent.x);
-			int find = set_player_move(tris, mouseevent.x, mouseevent.y, player);
+			int find = 0;
+
+			if( tris->gamemode == PLAYER_PC && player->current == PLAYER_B && player->win == 0 ){
+
+				tris->elements[mv->row][mv->col].player = player->current;
+				find = 1;
+				free(mv);
+				sleep(1);
+			}else{
+
+				getmouse(&mouseevent);
+				move(1, COLS - 25);
+				clrtoeol();
+				printw("%d - %d", mouseevent.y, mouseevent.x);
+				move(mouseevent.y, mouseevent.x);
+				find = set_player_move(tris, mouseevent.x, mouseevent.y, player);
+			}
+
 			if ( find == 1 ){
 
 				s = find_solution(tris, PLAYER_A, s);
@@ -131,10 +152,37 @@ int game_loop(Board *tris, Player *player, Solution *s)
 
 		if (ch == KEY_F(5) ){
 			move(1, 25);
-			addch('F');
-			addch('5');
+			addstr("F5");
 			refresh();
 			run = 2; //new game match
+		}
+
+		if (ch == KEY_F(3) ){
+			move(1, 25);
+			addstr("F3");
+			refresh();
+
+			//gamemode
+			char *choice_text[] = {"Player - Player","Player - PC","PC - PC (todo)"};
+			int num_of_elements = sizeof(choice_text)/sizeof(choice_text[0]);
+			int default_menu_selected = tris->gamemode;
+			Win_Response *choice = modal_win_choice(stdscr, 10, 34, BORDER_CHOICE, ' ' | COLOR_PAIR(2), "Game Mode", choice_text, num_of_elements, default_menu_selected);
+
+			if ( choice->button_selected == BUTTON_OK ){
+				//chenge gamemode
+				switch (choice->menu_selected)
+				{
+				case PLAYER_PLAYER:
+					tris->gamemode = PLAYER_PLAYER;
+					break;
+				case PLAYER_PC:
+					tris->gamemode = PLAYER_PC;
+					break;
+				case PC_PC:
+					//todo
+					break;
+				}
+			}
 		}
 
 		game_update(tris, player);
@@ -169,9 +217,13 @@ int game_draw(Board *tris, int offset_y, int offset_x, Player *player)
 	}
 
 	if ( player->current == PLAYER_B ){
+		char *player_name = "PLAYER B (X)";
+		if(tris->gamemode == PLAYER_PC){
+			player_name = "PC1 (X)";
+		}
 		mvaddstr(1, offset_x, "            " );
 		attron(A_BOLD | A_BLINK);
-		mvaddstr(1, offset_x+CELL_DIMENSION_X*2+2, "PLAYER B (X)" );
+		mvaddstr(1, offset_x+CELL_DIMENSION_X*2+2, player_name );
 		attroff(A_BOLD | A_BLINK);
 	}
 
@@ -194,6 +246,7 @@ int game_draw(Board *tris, int offset_y, int offset_x, Player *player)
 	mvaddch(CELL_DIMENSION_Y*2+1 + offset_y, CELL_DIMENSION_X*2+1 + offset_x, ACS_PLUS); // plus
 
 	// menu
+	mvaddstr(LINES-7, (COLS-20), "F3:  Gamemode" );
 	mvaddstr(LINES-6, (COLS-20), "F5:  New Game" );
 	mvaddstr(LINES-5, (COLS-20), "ESC: Quit" );
 
@@ -227,11 +280,15 @@ int game_draw(Board *tris, int offset_y, int offset_x, Player *player)
 
 		if (player->current == PLAYER_A)
 		{
-			m_win = modal_win(stdscr, 7, 30, BORDER_DEFAULT, ' ' | COLOR_PAIR(2), "PLAYER A, Win!");
+			m_win = modal_win(stdscr, 7, 30, BORDER_DEFAULT, ' ' | COLOR_PAIR(2), "", "PLAYER A, Win!");
 		}
 		if (player->current == PLAYER_B)
 		{
-			m_win = modal_win(stdscr, 7, 30, BORDER_DEFAULT, ' ' | COLOR_PAIR(2), "PLAYER B, Win!");
+			char *player_name = "PLAYER B, Win!";
+			if(tris->gamemode == PLAYER_PC){
+				player_name = "PC1, Win!";
+			}
+			m_win = modal_win(stdscr, 7, 30, BORDER_DEFAULT, ' ' | COLOR_PAIR(2), "", player_name);
 		}
 
 		wrefresh(m_win);

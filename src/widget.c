@@ -10,8 +10,6 @@
 #include <string.h>
 #include "widget.h"
 
-//#define TESTING 1
-
 void get_window_dimension(WINDOW *win, int *x, int *y)
 {
 	getmaxyx(win,*y,*x);
@@ -121,10 +119,14 @@ Center *get_center(WINDOW *win, int height, int width)
 	return center;
 }
 
-WINDOW *modal_win_ok(WINDOW *win_father, int height, int width, int border_type, int background, char *text)
+WINDOW *modal_win_ok(WINDOW *win_father, int height, int width, int border_type, int background, char *win_title, char *text)
 {
 	WINDOW *new_win;
 	Center *center = NULL;
+	MEVENT mouseevent;
+
+	int ch;
+	int esc = 0;
 
 	new_win = create_win_center(win_father, height, width, border_type);
 	center = get_center(new_win, 0, strlen(text));
@@ -133,16 +135,51 @@ WINDOW *modal_win_ok(WINDOW *win_father, int height, int width, int border_type,
 
 	mvwprintw(new_win, 1, center->x, "%s", text);
 
-	//button Ok
+	//button Ok	
 	char *btn_txt = "  Ok  ";
-	button(new_win, height-2, (width-strlen(btn_txt))/2, btn_txt);
+	int btn_x = (width-strlen(btn_txt))/2;
+	int btn_y = height-2;
+	button(new_win, btn_y, btn_x, btn_txt);
 
-	//wrefresh(new_win);
+	keypad(new_win, TRUE);
+	wrefresh(new_win);
+
+	do
+	{
+		ch = wgetch(new_win);
+
+		if (ch == '\n'){ //enter
+			esc = 1;
+		}
+		/*
+		if (ch == KEY_MOUSE)
+		{
+			getmouse(&mouseevent);
+			wattron(new_win, A_REVERSE);
+			mvwprintw(new_win,2,4,"%d - %d", mouseevent.y, mouseevent.x);
+			mvwprintw(new_win,3,4,"%d - %d", height, width);
+			mvwprintw(new_win,4,4,"%d - %d", btn_y, btn_x);
+			wattroff(new_win, A_REVERSE);
+			wrefresh(new_win);
+
+			if (mouseevent.y == btn_y &&
+				mouseevent.x >= btn_x && mouseevent.x <= btn_x+strlen(btn_txt)
+			){
+				esc = 1;
+			}
+		}*/
+	
+	} while(esc == 0);
+
+	//remove new_win
+	destroy_win(new_win);
+	wclear(win_father);
+	wrefresh(win_father);
 
 	return new_win;
 }
 
-WINDOW *modal_win(WINDOW *win_father, int height, int width, int border_type, int background, char *text)
+WINDOW *modal_win(WINDOW *win_father, int height, int width, int border_type, int background, char *win_title, char *text)
 {
 	WINDOW *new_win;
 
@@ -164,31 +201,186 @@ void button(WINDOW *win, int y, int x, char *text)
 	wattroff(win, A_REVERSE);
 }
 
+Win_Response *modal_win_choice(WINDOW *win_father, int height, int width, int border_type, int background, char *win_title, char *menu_elements[], int num_of_elements, int default_menu_selected)
+{
+	WINDOW *new_win;
+	int menu_select   = default_menu_selected;
+	int button_select = 0;
+	int esc           = 0;
+	int ch;
+	
+	Win_Response *win_status = NULL;
+	win_status = malloc(sizeof(Win_Response));
+
+	char *button_elements[] = {" Ok ", " Cancel "};
+
+	new_win = create_win_center(win_father, height, width, border_type);
+
+	wbkgd(new_win, background);
+
+	// set title
+	attron(A_BOLD);
+	mvwprintw(new_win, 0, 2, "[ %s ]", win_title );
+	attroff(A_BOLD);
+
+	int menu_center_x = (width - strlen(menu_elements[0])) / 2;
+	int btn_center_x = (width - strlen(button_elements[0]) - strlen(button_elements[1]) ) / 2;
+	
+	keypad(new_win, TRUE);
+	wrefresh(new_win);
+
+	do
+	{
+		for (size_t i = 0; i < num_of_elements; i++)
+		{
+			if ( menu_select == i ){
+				wattron(new_win, A_REVERSE);
+				mvwprintw(new_win, i+2, menu_center_x, "%s", menu_elements[i]);
+				wattroff(new_win, A_REVERSE);
+			}else{
+				mvwprintw(new_win, i+2, menu_center_x, "%s", menu_elements[i]);
+			}
+		}
+
+		for (size_t i = 0; i < 2; i++)
+		{
+			if ( button_select == i ){
+				wattron(new_win, A_REVERSE);
+				mvwprintw(new_win, height-2, btn_center_x+ i*8, "%s", button_elements[i]);
+				wattroff(new_win, A_REVERSE);
+			}else{
+				mvwprintw(new_win, height-2, btn_center_x+ i*8, "%s", button_elements[i]);
+			}
+		}
+
+		ch = wgetch(new_win);
+
+		switch (ch)
+		{
+		case '\n': //enter
+			esc = 1;
+			break;
+		case KEY_UP:
+			menu_select -= 1;
+			break;
+		case KEY_DOWN:
+			menu_select += 1;
+			break;
+		case KEY_LEFT:
+			button_select -=1;
+			break;
+		case KEY_RIGHT:
+			button_select +=1;
+			break;
+		}
+
+		if ( menu_select > num_of_elements-1 ){
+			menu_select = 0;
+		}
+		if ( menu_select < 0 ){
+			menu_select = num_of_elements-1;
+		}
+		
+		if( button_select < 0 ){
+			button_select = 1;
+		}
+		if( button_select > 1 ){
+			button_select = 0;
+		}
+
+		//wrefresh(new_win);
+		
+	} while(esc == 0);
+
+	wrefresh(new_win);
+
+	//remove new_win
+	destroy_win(new_win);
+	wclear(win_father);
+	wrefresh(win_father);
+
+	win_status->menu_selected   = menu_select;
+	win_status->button_selected = button_select;
+
+	return win_status;
+}
+
 // ******************
 // for debug
 // ******************
+
+//#define TESTING 1
 
 #ifdef TESTING
 
 int main(int argc, char const *argv[])
 {
+	typedef enum 
+	{
+		WINDOW_CENTER,
+		WINDOW_OK,
+		WINDOW_CHOICE,
+	} ExampleType;
+	
 	int x, y = 0;
+	mmask_t mmask;
+	ExampleType testType = WINDOW_CHOICE;
 
 	initscr();
 	noecho();
 	keypad(stdscr, TRUE);
 
+	start_color();
+	init_pair(0, COLOR_BLUE, COLOR_WHITE);
+	init_pair(1, COLOR_WHITE, COLOR_BLUE);
+	init_pair(2, COLOR_WHITE, COLOR_CYAN);
+
+	curs_set(0);
+
+	mmask = mousemask(ALL_MOUSE_EVENTS, NULL);
+
+	//bkgd(ACS_HLINE);
+
 	create_box(stdscr, BORDER_DEFAULT);
 	refresh();
 
-	WINDOW *test;
-	test = create_win_center(stdscr, 7, 25, BORDER_CHOICE);
-	wattron(test, A_REVERSE);
-	mvwprintw(test, 2, 2, "%s", "qualcosa-test");
-	wattroff(test, A_REVERSE);
-	wrefresh(test);
+	// test window center
+    
+	if ( testType == WINDOW_CENTER )
+	{
+		WINDOW *test;
+		test = create_win_center(stdscr, 7, 25, BORDER_CHOICE);
+		wattron(test, A_REVERSE);
+		mvwprintw(test, 2, 2, "%s", "Window Center");
+		wattroff(test, A_REVERSE);
+		wrefresh(test);
 
-	getch();
+		mvwprintw(stdscr, 2, 2, "text choice:  %s", "press a key to exit");
+		getch();
+	}
+	
+	if ( testType == WINDOW_OK )
+	{
+		WINDOW *m_win = NULL;
+		m_win = modal_win_ok(stdscr, 7, 30, BORDER_DEFAULT, ' ' | COLOR_PAIR(2), "", "Window OK!");
+
+		mvwprintw(stdscr, 2, 2, "text choice:  %s", "press a key to exit");
+		getch();
+	}
+
+	if ( testType == WINDOW_CHOICE )
+	{
+		char *choice_text[] = {"choice 1","choice 2","choice 3","choice 4"};
+		int num_of_elements = sizeof(choice_text)/sizeof(choice_text[0]);
+		int default_menu_selected = 0;
+		Win_Response *choice = modal_win_choice(stdscr, 8, 30, BORDER_CHOICE, ' ' | COLOR_PAIR(2), "Title", choice_text, num_of_elements, default_menu_selected);
+
+		if ( choice->button_selected == BUTTON_OK ){
+			mvwprintw(stdscr, 2, 2, "text choice:  %s", choice_text[choice->menu_selected]);
+		}
+		mvwprintw(stdscr, 4, 2, "%s", "press a key to exit");
+		getch();
+	}
 
 	endwin();
 	return 0;

@@ -17,7 +17,7 @@ all:$(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CC) $(FLAGS) $(OBJS) -o $@ $(LFLAGS) 
-	$(RM) -r $(DESTINATION_FOLDER)/*.o
+#	$(RM) -r $(DESTINATION_FOLDER)/*.o
 obj/%.o: src/%.c
 	$(CC) $(FLAGS)  -c $< -o $@
 

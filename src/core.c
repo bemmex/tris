@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 #include "core.h"
 
 void init_board(Board *tris)
@@ -16,6 +17,7 @@ void init_board(Board *tris)
 
     tris->row = MAX_ELEMENT;
     tris->column = MAX_ELEMENT;
+    tris->gamemode = PLAYER_PC;
     
     for (int i = 0; i < MAX_ELEMENT; ++i) //row
     {
@@ -176,4 +178,64 @@ void set_player_state(Player *player, int state)
 int get_player_state(Player *player)
 {
     return player->current;
+}
+
+Move *find_best_move(Board *tris)
+{
+    Move *mv = NULL;
+    mv = malloc(sizeof(Move));
+
+    if(mv != NULL)
+    {
+        for (int i = 0; i < tris->row; ++i)
+        {
+            for (int j = 0; j < tris->column; ++j)
+            {
+                Cell elem = tris->elements[i][j];
+
+                if ( elem.player == 0 )
+                {
+                    //calculate score
+
+                    //tris->elements[i][j].player = player->current;
+                    //find = 1;
+                }
+
+                //mvaddch(CELL_DIMENSION_Y/2 + offset_y + (CELL_DIMENSION_Y*i) + 1*i, CELL_DIMENSION_X/2 + offset_x + (CELL_DIMENSION_X*j) + 1*j, elem.player+90); // player
+            }
+        }
+    }
+
+    return mv;
+}
+
+Move *random_walk(Board *tris)
+{
+    Move *mv = NULL;
+    mv = malloc(sizeof(Move));
+
+    if(mv != NULL)
+    {
+        srand(time(NULL));
+        while (1)
+        {
+            int row = random_min_max(0, 2);
+            int col = random_min_max(0, 2);
+
+            Cell elem = tris->elements[row][col];
+
+            if (elem.player == 0){
+                mv->row = row;
+                mv->col = col;
+                break;
+            }
+        }
+
+    }
+
+    return mv;
+}
+
+int random_min_max(int min, int max){
+   return min + rand() / (RAND_MAX / (max - min + 1) + 1);
 }
