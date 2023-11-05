@@ -88,7 +88,7 @@ int game_loop(Board *tris, Player *player, Solution *s)
 	{
 		Move *mv = NULL;
 
-		if ( tris->gamemode == PLAYER_PC && player->current == PLAYER_B && player->win == 0 ){
+		if ( tris->gamemode == PLAYER_PC && player->current == PLAYER_B && player->win == 0 && tris->moves_to_end > 0 ){
 			mv = random_walk(tris);
 			ch = KEY_MOUSE;
 		}else{
@@ -104,9 +104,10 @@ int game_loop(Board *tris, Player *player, Solution *s)
 		{
 			int find = 0;
 
-			if( tris->gamemode == PLAYER_PC && player->current == PLAYER_B && player->win == 0 ){
+			if( tris->gamemode == PLAYER_PC && player->current == PLAYER_B && player->win == 0 && tris->moves_to_end > 0 ){
 
 				tris->elements[mv->row][mv->col].player = player->current;
+				tris->moves_to_end -= 1;
 				find = 1;
 				free(mv);
 				sleep(1);
@@ -114,6 +115,10 @@ int game_loop(Board *tris, Player *player, Solution *s)
 
 				getmouse(&mouseevent);
 				move(1, COLS - 25);
+				clrtoeol();
+				printw("%s", "Move");
+				clrtoeol();
+				move(2, COLS - 25);
 				clrtoeol();
 				printw("%d - %d", mouseevent.y, mouseevent.x);
 				move(mouseevent.y, mouseevent.x);
@@ -169,19 +174,8 @@ int game_loop(Board *tris, Player *player, Solution *s)
 			Win_Response *choice = modal_win_choice(stdscr, 10, 34, BORDER_CHOICE, ' ' | COLOR_PAIR(2), "Game Mode", choice_text, num_of_elements, default_menu_selected);
 
 			if ( choice->button_selected == BUTTON_OK ){
-				//chenge gamemode
-				switch (choice->menu_selected)
-				{
-				case PLAYER_PLAYER:
-					tris->gamemode = PLAYER_PLAYER;
-					break;
-				case PLAYER_PC:
-					tris->gamemode = PLAYER_PC;
-					break;
-				case PC_PC:
-					//todo
-					break;
-				}
+				//change gamemode
+				tris->gamemode = choice->menu_selected;
 			}
 		}
 
@@ -204,6 +198,19 @@ int game_draw(Board *tris, int offset_y, int offset_x, Player *player)
 	create_box(stdscr, BORDER_DEFAULT);
 	show_screen_dimension(stdscr);
 
+	move(4, COLS - 15);
+	clrtoeol();
+	printw("%s", "Game Mode");
+	move(5, COLS - 15);
+	clrtoeol();
+	if (tris->gamemode == PLAYER_PLAYER){
+		printw("%s", "PLAYER_PLAYER");
+	}
+	if (tris->gamemode == PLAYER_PC){
+		printw("%s", "PLAYER_PC");
+	}
+	refresh();
+
 	// title
 	attron(A_BOLD);
 	mvaddstr(0, (COLS-6)/2, " Tris " );
@@ -220,11 +227,14 @@ int game_draw(Board *tris, int offset_y, int offset_x, Player *player)
 		char *player_name = "PLAYER B (X)";
 		if(tris->gamemode == PLAYER_PC){
 			player_name = "PC1 (X)";
+			mvaddstr(1, offset_x, "            " );
+			mvaddstr(1, offset_x+CELL_DIMENSION_X*2+2, player_name );
+		}else{
+			mvaddstr(1, offset_x, "            " );
+			attron(A_BOLD | A_BLINK);
+			mvaddstr(1, offset_x+CELL_DIMENSION_X*2+2, player_name );
+			attroff(A_BOLD | A_BLINK);
 		}
-		mvaddstr(1, offset_x, "            " );
-		attron(A_BOLD | A_BLINK);
-		mvaddstr(1, offset_x+CELL_DIMENSION_X*2+2, player_name );
-		attroff(A_BOLD | A_BLINK);
 	}
 
 	// show board:
@@ -280,17 +290,24 @@ int game_draw(Board *tris, int offset_y, int offset_x, Player *player)
 
 		if (player->current == PLAYER_A)
 		{
-			m_win = modal_win(stdscr, 7, 30, BORDER_DEFAULT, ' ' | COLOR_PAIR(2), "", "PLAYER A, Win!");
+			m_win = modal_win(stdscr, 7, 30, BORDER_DEFAULT, ' ' | COLOR_PAIR(2), "", "PLAYER A, Won!");
 		}
 		if (player->current == PLAYER_B)
 		{
-			char *player_name = "PLAYER B, Win!";
+			char *player_name = "PLAYER B, Won!";
 			if(tris->gamemode == PLAYER_PC){
-				player_name = "PC1, Win!";
+				player_name = "PC1, Won!";
 			}
 			m_win = modal_win(stdscr, 7, 30, BORDER_DEFAULT, ' ' | COLOR_PAIR(2), "", player_name);
 		}
 
+		wrefresh(m_win);
+	}
+
+	if ( tris->moves_to_end == 0 && player->win == 0 )
+	{
+		WINDOW *m_win =NULL;
+		m_win = modal_win(stdscr, 7, 30, BORDER_DEFAULT, ' ' | COLOR_PAIR(2), "", "No one won!");
 		wrefresh(m_win);
 	}
 
@@ -372,8 +389,12 @@ void show_screen_dimension(WINDOW *win)
 	int y = 0;
 	get_window_dimension(win, &x, &y);
 	move(1, COLS - 15);
-	//printw("X:%d - Y:%d", LINES, COLS);
-	printw("X:%d - Y:%d", x, y);
+	clrtoeol();
+	printw("%s", "Screen");
+	move(2, COLS - 15);
+	clrtoeol();
+	printw("C:%d - R:%d", x, y);
+	refresh();
 }
 
 // ******************

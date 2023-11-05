@@ -39,6 +39,7 @@ struct _Board {
 	int row;
 	int column;
 	int gamemode;
+	int moves_to_end;
 };
 
 struct _Solution {

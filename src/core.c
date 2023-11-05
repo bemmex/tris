@@ -18,6 +18,7 @@ void init_board(Board *tris)
     tris->row = MAX_ELEMENT;
     tris->column = MAX_ELEMENT;
     tris->gamemode = PLAYER_PC;
+    tris->moves_to_end = MAX_ELEMENT * MAX_ELEMENT;
     
     for (int i = 0; i < MAX_ELEMENT; ++i) //row
     {
@@ -148,7 +149,7 @@ int set_player_move(Board *tris, int x, int y, Player *player)
                     elem.y <= y && (elem.y + CELL_DIMENSION_Y) >= y 
                 ){
                     tris->elements[i][j].player = player->current;
-                    
+                    tris->moves_to_end -= 1;
                     find = 1;
                 }
                 //mvaddch(CELL_DIMENSION_Y/2 + offset_y + (CELL_DIMENSION_Y*i) + 1*i, CELL_DIMENSION_X/2 + offset_x + (CELL_DIMENSION_X*j) + 1*j, elem.player+90); // player

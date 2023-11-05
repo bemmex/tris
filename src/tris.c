@@ -31,7 +31,7 @@ int main(int argc, char const *argv[])
     int status_init_screen = 0;
 
     Player player;
-	Board tris = {};
+    Board tris = {};
     Solution *s = NULL;
 
     s = create_empty_solution();
@@ -77,7 +77,7 @@ int main(int argc, char const *argv[])
     free(s->check);
     free(s);
 
-	return 0;
+    return 0;
 }
 
 void test_board()
