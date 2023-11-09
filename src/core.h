@@ -79,6 +79,6 @@ int get_player_state(Player *player);
 
 Move *find_best_move(Board *tris);
 
-Move *random_walk(Board *tris);
+Move *random_walk(Board *tris, Solution *s);
 
 #endif /* _CORE_H */

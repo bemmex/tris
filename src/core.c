@@ -210,7 +210,7 @@ Move *find_best_move(Board *tris)
     return mv;
 }
 
-Move *random_walk(Board *tris)
+Move *random_walk(Board *tris, Solution *s)
 {
     Move *mv = NULL;
     mv = malloc(sizeof(Move));
@@ -218,10 +218,103 @@ Move *random_walk(Board *tris)
     if(mv != NULL)
     {
         srand(time(NULL));
+        Solution *sol_empty = create_empty_solution();
+
+        sol_empty = find_solution(tris, PLAYER_EMPTY, sol_empty);
+
         while (1)
         {
+            int can_win = 0;
             int row = random_min_max(0, 2);
             int col = random_min_max(0, 2);
+            
+            //find PLAYER_B won
+            s = find_solution(tris, PLAYER_B, s);
+            for (int i = 0; i < 8; ++i)
+            {
+                if (s->check[i] == 2 && sol_empty->check[i] > 0 ){
+                    if (i<=2){ //row
+                        row = i;
+                        can_win = 1;
+                    }
+                    if ( i>2 && i<=5){ //col
+                        col = i-3;
+                        can_win = 1;
+                    }
+                    if ( i==6){ 
+                        if ( tris->elements[0][0].player == 0 ){
+                            row = 0;
+                            col = 0;
+                        }
+                        if ( tris->elements[1][1].player == 0 ){
+                            row = 1;
+                            col = 1;
+                        }
+                        if ( tris->elements[2][2].player == 0 ){
+                            row = 2;
+                            col = 2;
+                        }
+                        can_win = 1;
+                    }
+                    if ( i==7){
+                        if ( tris->elements[0][2].player == 0 ){
+                            row = 0;
+                            col = 2;
+                        }
+                        if ( tris->elements[1][1].player == 0 ){
+                            row = 1;
+                            col = 1;
+                        }
+                        if ( tris->elements[2][0].player == 0 ){
+                            row = 2;
+                            col = 0;
+                        }
+                        can_win = 1;
+                    }
+                    break;
+                }
+            }
+
+            if ( can_win == 0 ){
+                //find PLAYER_A won
+                s = find_solution(tris, PLAYER_A, s);
+                for (int i = 0; i < 8; ++i)
+                {
+                    if (s->check[i] == 2 && sol_empty->check[i] > 0 ){
+                        if (i<=2){ row = i;} //row
+                        if ( i>2 && i<=5){ col = i-3;} //col
+                        if ( i==6){
+                            if ( tris->elements[0][0].player == 0 ){
+                                row = 0;
+                                col = 0;
+                            }
+                            if ( tris->elements[1][1].player == 0 ){
+                                row = 1;
+                                col = 1;
+                            }
+                            if ( tris->elements[2][2].player == 0 ){
+                                row = 2;
+                                col = 2;
+                            }
+                        }
+                        if ( i==7){
+                            if ( tris->elements[0][2].player == 0 ){
+                                row = 0;
+                                col = 2;
+                            }
+                            if ( tris->elements[1][1].player == 0 ){
+                                row = 1;
+                                col = 1;
+                            }
+                            if ( tris->elements[2][0].player == 0 ){
+                                row = 2;
+                                col = 0;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
 
             Cell elem = tris->elements[row][col];
 
@@ -232,6 +325,8 @@ Move *random_walk(Board *tris)
             }
         }
 
+        free(sol_empty->check);
+        free(sol_empty);
     }
 
     return mv;

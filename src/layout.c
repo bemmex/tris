@@ -89,7 +89,7 @@ int game_loop(Board *tris, Player *player, Solution *s)
 		Move *mv = NULL;
 
 		if ( tris->gamemode == PLAYER_PC && player->current == PLAYER_B && player->win == 0 && tris->moves_to_end > 0 ){
-			mv = random_walk(tris);
+			mv = random_walk(tris, s);
 			ch = KEY_MOUSE;
 		}else{
 			ch = getch();
@@ -130,7 +130,6 @@ int game_loop(Board *tris, Player *player, Solution *s)
 				s = find_solution(tris, PLAYER_A, s);
 				for (int i = 0; i < 8; ++i)
 				{
-					//printf("%d\n", s->check[i]);
 					if (s->check[i] == 3){
 						player->win = 1;
 						set_player_state(player, PLAYER_A);
@@ -140,7 +139,6 @@ int game_loop(Board *tris, Player *player, Solution *s)
 				s = find_solution(tris, PLAYER_B, s);
 				for (int i = 0; i < 8; ++i)
 				{
-					//printf("%d\n", s->check[i]);
 					if (s->check[i] == 3){
 						player->win = 1;
 						set_player_state(player, PLAYER_B);
@@ -168,7 +166,7 @@ int game_loop(Board *tris, Player *player, Solution *s)
 			refresh();
 
 			//gamemode
-			char *choice_text[] = {"Player - Player","Player - PC","PC - PC (todo)"};
+			char *choice_text[] = {"Two Player","Player-PC","PC-PC (todo)"};
 			int num_of_elements = sizeof(choice_text)/sizeof(choice_text[0]);
 			int default_menu_selected = tris->gamemode;
 			Win_Response *choice = modal_win_choice(stdscr, 10, 34, BORDER_CHOICE, ' ' | COLOR_PAIR(2), "Game Mode", choice_text, num_of_elements, default_menu_selected);
@@ -204,10 +202,10 @@ int game_draw(Board *tris, int offset_y, int offset_x, Player *player)
 	move(5, COLS - 15);
 	clrtoeol();
 	if (tris->gamemode == PLAYER_PLAYER){
-		printw("%s", "PLAYER_PLAYER");
+		printw("%s", "Two PLAYER");
 	}
 	if (tris->gamemode == PLAYER_PC){
-		printw("%s", "PLAYER_PC");
+		printw("%s", "PLAYER-PC");
 	}
 	refresh();
 

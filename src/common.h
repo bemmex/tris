@@ -14,6 +14,7 @@
 #define CELL_DIMENSION_X 13
 #define CELL_DIMENSION_Y 6
 
+#define PLAYER_EMPTY 0
 #define PLAYER_A 1  // => 0
 #define PLAYER_B 2  // => X
 
